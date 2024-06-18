@@ -8,11 +8,8 @@ enum Styles {
 class Painter {
   // 容器大小
   Size size = const Size(300, 300);
-  // 控制点（手指触摸点）
-  Offset offset = const Offset(0, 0);
-
   Styles style = Styles.styleLowerRight;
-
+  Offset offset = const Offset(0, 0);
   double ax = 0, ay = 0;
   double bx = 0, by = 0;
   double cx = 0, cy = 0;
@@ -25,6 +22,8 @@ class Painter {
   double ix = 0, iy = 0;
   double dx = 0, dy = 0;
 
+  // 控制点（手指触摸点）
+  Offset a = const Offset(0, 0);
   Offset f = const Offset(0, 0);
   Offset g = const Offset(0, 0);
   Offset e = const Offset(0, 0);
@@ -53,22 +52,29 @@ class Painter {
   Path pathC = Path();
 
   Painter(this.offset, this.size, this.style) {
-    print('style: $style');
-
-    // switch (style) {
-    //   case Styles.styleTopRight:
-    //     fy = size.height;
-    //     break;
-    //   case Styles.styleLowerRight:
-    //     fy = 0;
-    //     break;
-    // }
+    //
+    calcPointAByTouchPoint();
+    if (calcPointCX(offset, f) < 0) {
+      // calcPointAByTouchPoint();
+      // return;
+      a = a;
+    } else {
+      a = offset;
+    }
+    switch (style) {
+      case Styles.styleTopRight:
+        fy = 0;
+        break;
+      case Styles.styleLowerRight:
+        fy = size.height;
+        break;
+    }
     // a dot
-    ax = offset.dx;
-    ay = offset.dy;
+    ax = a.dx;
+    ay = a.dy;
     // f dot
     fx = size.width;
-    fy = size.height;
+    // fy = size.height;
     f = Offset(fx, fy); // 边缘角点
     // g dot
     gx = (ax + fx) / 2;
@@ -146,10 +152,10 @@ class Painter {
   }
 
   Path getPathA() {
-    if (offset.dx == -1 && offset.dy == -1) {
+    if (a.dx == -1 && a.dy == -1) {
       return getPathDefault();
     }
-    if (f.dx != size.width && f.dy != size.height) {
+    if (style == Styles.styleTopRight) {
       return getPathAFromTopRight();
     }
     pathA.reset();
@@ -191,5 +197,32 @@ class Painter {
     pathA.lineTo(size.width, 0);
     pathA.close();
     return pathA;
+  }
+
+  /// 计算C点的X值
+  /// @param a
+  /// @param f
+  /// @return
+  double calcPointCX(Offset a, Offset f) {
+    double fx = size.width;
+    double gx = (a.dx + fx) / 2;
+    double gy = (a.dy + fy) / 2;
+    double ex = (gx - (fy - gy) * (fy - gy) / (fx - gx)).abs();
+    return ex - (fx - ex) / 2;
+  }
+
+  /// 如果c点x坐标小于0,根据触摸点重新测量a点坐标
+  void calcPointAByTouchPoint() {
+    double w0 = size.width - c.dx;
+
+    double w1 = (f.dx - a.dx).abs();
+    double w2 = size.width * w1 / w0;
+    double ax = (f.dx - w2).abs();
+
+    double h1 = (f.dy - a.dy).abs();
+    double h2 = w2 * h1 / w1;
+    double ay = (f.dy - h2).abs();
+    print('calcPointAByTouchPoint: ${c.dx}');
+    // a = Offset(ax, ay);
   }
 }

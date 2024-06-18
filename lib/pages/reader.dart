@@ -47,6 +47,7 @@ class FlipPageAnimation extends StatefulWidget {
 
 class _FlipPageAnimationState extends State<FlipPageAnimation>
     with SingleTickerProviderStateMixin {
+  GlobalKey key = GlobalKey();
   Styles style = Styles.styleLowerRight;
   Offset offset = const Offset(-1, -1);
 
@@ -81,6 +82,7 @@ class _FlipPageAnimationState extends State<FlipPageAnimation>
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
       return Listener(
+        key: key,
         onPointerDown: (event) => handlePointerDown(
           event,
           constraints.maxWidth,
@@ -93,7 +95,8 @@ class _FlipPageAnimationState extends State<FlipPageAnimation>
           width: constraints.maxWidth,
           height: constraints.maxHeight,
           child: CustomPaint(
-            painter: MyCustomPainter(offset, style: style),
+            painter: MyCustomPainter(Painter(offset,
+                Size(constraints.maxWidth, constraints.maxHeight), style)),
           ),
         ),
       );
@@ -102,10 +105,8 @@ class _FlipPageAnimationState extends State<FlipPageAnimation>
 }
 
 class MyCustomPainter extends CustomPainter {
-  Offset t;
-  Styles style;
-  double num = 0.0;
-  MyCustomPainter(this.t, {this.style = Styles.styleLowerRight});
+  Painter painter;
+  MyCustomPainter(this.painter);
 
   TextPainter getTextSpan(String text) {
     TextSpan span = TextSpan(
@@ -126,7 +127,6 @@ class MyCustomPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    Painter painter = Painter(t, size, style);
     var as = getTextSpan('a');
     var bs = getTextSpan('b');
     var cs = getTextSpan('c');
@@ -139,7 +139,7 @@ class MyCustomPainter extends CustomPainter {
     var js = getTextSpan('j');
     var ks = getTextSpan('k');
 
-    as.paint(canvas, painter.offset);
+    as.paint(canvas, painter.a);
     bs.paint(canvas, painter.b);
     cs.paint(canvas, painter.c);
     ds.paint(canvas, painter.d);
