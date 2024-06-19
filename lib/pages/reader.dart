@@ -50,39 +50,87 @@ class _FlipPageAnimationState extends State<FlipPageAnimation>
   GlobalKey key = GlobalKey();
   Styles style = Styles.styleLowerRight;
   Offset offset = const Offset(-1, -1);
-
+  Size size = const Size(0, 0);
+  late Painter painter;
   handlePointerDown(PointerDownEvent details, double width, double height) {
-    print('handlePointerDown: height:$width, height:$height');
-    if (details.localPosition.dy < (height / 2)) {
+    double x = details.localPosition.dx;
+    double y = details.localPosition.dy;
+    Styles style2 = Styles.styleLowerRight;
+    if (x <= width / 3) {
+      //左
+      style2 = Styles.styleLeft;
+      print('点击了左部');
+    } else if (x > width / 3 && y <= height / 3) {
+      //上
+      style2 = Styles.styleTopRight;
+      print('点击了上部');
+    } else if (x > width * 2 / 3 && y > height / 3 && y <= height * 2 / 3) {
+      //右
+      style2 = Styles.styleRight;
+      print('点击了右部');
+    } else if (x > width / 3 && y > height * 2 / 3) {
+      //下
+      style2 = Styles.styleLowerRight;
+      print("点击了下部");
+    } else if (x > width / 3 &&
+        x < width * 2 / 3 &&
+        y > height / 3 &&
+        y < height * 2 / 3) {
+      //中
+      style2 = Styles.styleMiddle;
+      print("点击了中部");
+    }
+
+    setState(() {
+      offset = details.localPosition;
+      size = Size(width, height);
+      style = style2;
+    });
+  }
+
+  handlePointerMove(PointerMoveEvent details) {
+    double fx = size.width;
+    double fy = size.height;
+    switch (style) {
+      case Styles.styleTopRight:
+        fy = 0;
+        break;
+      case Styles.styleLowerRight:
+        fy = size.height;
+        break;
+      case Styles.styleLeft:
+      case Styles.styleRight:
+        double ay = size.height - 1;
+        fx = size.width;
+        fy = size.width;
+        setState(() {
+          offset = Offset(details.localPosition.dx, ay);
+        });
+      default:
+        break;
+    }
+    Offset f = Offset(fx, fy);
+    if (painter.calcPointCX(details.localPosition, f) > 0) {
       setState(() {
-        style = Styles.styleTopRight;
+        offset = details.localPosition;
       });
-      //从上半部分翻页
-      // bookPageView.setTouchPoint(event.getX(),event.getY(),bookPageView.STYLE_TOP_RIGHT);
     } else {
-      //从下半部分翻页
-      // bookPageView.setTouchPoint(event.getX(),event.getY(),bookPageView.STYLE_LOWER_RIGHT);
       setState(() {
-        style = Styles.styleLowerRight;
+        offset = painter.calcPointAByTouchPoint(offset, f);
       });
     }
   }
 
-  handlePointerMove(PointerMoveEvent details) {
-    setState(() {
-      offset = details.localPosition;
-    });
-  }
-
   handlePointerUp(PointerUpEvent details) {
-    print('handlePointerUp: ${details.localPosition}');
+    setState(() {
+      offset = const Offset(-1, -1);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
       return Listener(
-        key: key,
         onPointerDown: (event) => handlePointerDown(
           event,
           constraints.maxWidth,
@@ -95,7 +143,7 @@ class _FlipPageAnimationState extends State<FlipPageAnimation>
           width: constraints.maxWidth,
           height: constraints.maxHeight,
           child: CustomPaint(
-            painter: MyCustomPainter(Painter(offset,
+            painter: MyCustomPainter(painter = Painter(offset,
                 Size(constraints.maxWidth, constraints.maxHeight), style)),
           ),
         ),
@@ -111,10 +159,11 @@ class MyCustomPainter extends CustomPainter {
   TextPainter getTextSpan(String text) {
     TextSpan span = TextSpan(
       text: text,
+      spellOut: true,
       style: const TextStyle(
-        fontSize: 10.0,
+        fontSize: 20.0,
         fontFamily: 'serif',
-        color: Colors.black,
+        color: Colors.white,
       ),
     );
     var dt = TextPainter(
@@ -127,33 +176,40 @@ class MyCustomPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    var as = getTextSpan('a');
-    var bs = getTextSpan('b');
-    var cs = getTextSpan('c');
-    var ds = getTextSpan('d');
-    var es = getTextSpan('e');
-    var fs = getTextSpan('f');
-    var gs = getTextSpan('g');
-    var hs = getTextSpan('h');
-    var iss = getTextSpan('i');
-    var js = getTextSpan('j');
-    var ks = getTextSpan('k');
+    var text = getTextSpan('hello world');
 
-    as.paint(canvas, painter.a);
-    bs.paint(canvas, painter.b);
-    cs.paint(canvas, painter.c);
-    ds.paint(canvas, painter.d);
-    es.paint(canvas, painter.e);
-    fs.paint(canvas, painter.f);
-    gs.paint(canvas, painter.g);
-    hs.paint(canvas, painter.h);
-    iss.paint(canvas, painter.i);
-    js.paint(canvas, painter.j);
-    ks.paint(canvas, painter.k);
+    // var as = getTextSpan('a');
+    // var bs = getTextSpan('b');
+    // var cs = getTextSpan('c');
+    // var ds = getTextSpan('d');
+    // var es = getTextSpan('e');
+    // var fs = getTextSpan('f');
+    // var gs = getTextSpan('g');
+    // var hs = getTextSpan('h');
+    // var iss = getTextSpan('i');
+    // var js = getTextSpan('j');
+    // var ks = getTextSpan('k');
 
-    canvas.drawPath(painter.pathB, painter.pathBPaint);
-    canvas.drawPath(painter.pathC, painter.pathCPaint);
+    // as.paint(canvas, painter.a);
+    // bs.paint(canvas, painter.b);
+    // cs.paint(canvas, painter.c);
+    // ds.paint(canvas, painter.d);
+    // es.paint(canvas, painter.e);
+    // fs.paint(canvas, painter.f);
+    // gs.paint(canvas, painter.g);
+    // hs.paint(canvas, painter.h);
+    // iss.paint(canvas, painter.i);
+    // js.paint(canvas, painter.j);
+    // ks.paint(canvas, painter.k);
+
+    if (painter.a.dx != -1 && painter.a.dy != -1) {
+      canvas.drawPath(painter.getPathB(), painter.pathBPaint);
+      canvas.drawPath(painter.getPathC(), painter.pathCPaint);
+    }
+
     canvas.drawPath(painter.getPathA(), painter.pathAPaint);
+    text.paint(canvas, const Offset(0, 0));
+
   }
 
   @override

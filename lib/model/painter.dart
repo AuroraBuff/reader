@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 
 enum Styles {
-  styleTopRight,
-  styleLowerRight,
+  styleLeft, //点击左边区域
+  styleRight, //点击右边区域
+  styleMiddle, //点击中间区域
+  styleTopRight, //f点在右上角
+  styleLowerRight, //f点在右下角
 }
 
 class Painter {
   // 容器大小
   Size size = const Size(300, 300);
   Styles style = Styles.styleLowerRight;
-  Offset offset = const Offset(0, 0);
   double ax = 0, ay = 0;
   double bx = 0, by = 0;
   double cx = 0, cy = 0;
@@ -51,24 +53,26 @@ class Painter {
   Path pathB = Path();
   Path pathC = Path();
 
-  Painter(this.offset, this.size, this.style) {
-    //
-    calcPointAByTouchPoint();
-    if (calcPointCX(offset, f) < 0) {
-      // calcPointAByTouchPoint();
-      // return;
-      a = a;
-    } else {
-      a = offset;
+  Painter(this.a, this.size, this.style) {
+    if (a.dx != -1 && a.dy != -1) {
+      switch (style) {
+        case Styles.styleTopRight:
+          fy = 0;
+          break;
+        case Styles.styleLowerRight:
+          fy = size.height;
+          break;
+        case Styles.styleLeft:
+        case Styles.styleRight:
+          double ay = size.height - 1;
+          a = Offset(a.dx, ay);
+          fy = size.height;
+          break;
+        default:
+          break;
+      }
     }
-    switch (style) {
-      case Styles.styleTopRight:
-        fy = 0;
-        break;
-      case Styles.styleLowerRight:
-        fy = size.height;
-        break;
-    }
+
     // a dot
     ax = a.dx;
     ay = a.dy;
@@ -111,9 +115,6 @@ class Painter {
     ix = (jx + 2 * hx + kx) / 4;
     iy = (2 * hy + jy + ky) / 4;
     i = Offset(ix, iy);
-    pathA = getPathA();
-    pathB = getPathB();
-    pathC = getPathC();
   }
 
   Offset getCrossPoint(Offset lineOneMyPointOne, Offset lineOneMyPointTwo,
@@ -199,6 +200,55 @@ class Painter {
     return pathA;
   }
 
+  /// 计算各个点的坐标
+  /// @param touchPoint 触摸点
+  /// @param edge 边角坐标
+  /// @return
+  void calcPoints(Offset touchPoint, Offset edge) {
+    // a dot
+    ax = touchPoint.dx;
+    ay = touchPoint.dy;
+    // f dot
+    fx = edge.dx;
+    fy = edge.dy;
+    f = Offset(fx, fy); // 边缘角点
+    // g dot
+    gx = (ax + fx) / 2;
+    gy = (ay + fy) / 2;
+    g = Offset(gx, gy);
+    // e dot
+    ex = gx - (fy - gy) * (fy - gy) / (fx - gx);
+    ey = fy;
+    e = Offset(ex, ey);
+    // h dot
+    hx = fx;
+    hy = gy - (fx - gx) * (fx - gx) / (fy - gy);
+    h = Offset(hx, hy);
+
+    cx = ex - (fx - ex) / 2;
+    cy = fy;
+    c = Offset(cx, cy);
+    jx = fx;
+    jy = hy - (fy - hy) / 2;
+    j = Offset(jx, jy);
+
+    b = getCrossPoint(
+        Offset(ax, ay), Offset(ex, ey), Offset(cx, cy), Offset(jx, jy));
+    bx = b.dx;
+    by = b.dy;
+    k = getCrossPoint(
+        Offset(ax, ay), Offset(hx, hy), Offset(cx, cy), Offset(jx, jy));
+    kx = k.dx;
+    ky = k.dy;
+
+    dx = (cx + 2 * ex + bx) / 4;
+    dy = (2 * ey + cy + by) / 4;
+    d = Offset(dx, dy);
+    ix = (jx + 2 * hx + kx) / 4;
+    iy = (2 * hy + jy + ky) / 4;
+    i = Offset(ix, iy);
+  }
+
   /// 计算C点的X值
   /// @param a
   /// @param f
@@ -212,7 +262,7 @@ class Painter {
   }
 
   /// 如果c点x坐标小于0,根据触摸点重新测量a点坐标
-  void calcPointAByTouchPoint() {
+  Offset calcPointAByTouchPoint(Offset a, Offset f) {
     double w0 = size.width - c.dx;
 
     double w1 = (f.dx - a.dx).abs();
@@ -222,7 +272,6 @@ class Painter {
     double h1 = (f.dy - a.dy).abs();
     double h2 = w2 * h1 / w1;
     double ay = (f.dy - h2).abs();
-    print('calcPointAByTouchPoint: ${c.dx}');
-    // a = Offset(ax, ay);
+    return Offset(ax, ay);
   }
 }
